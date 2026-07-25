@@ -1,0 +1,22 @@
+{
+  "name": "devlog-monorepo",
+  "version": "0.3.0",
+  "private": true,
+  "description": "devlog: automated build-in-public tool. Monorepo containing the core daemon/CLI, the Electron shell, and the dashboard UI.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "build": "npm run build -w @devlog/core && npm run build -w @devlog/dashboard && npm run build -w @devlog/electron",
+    "build:core": "npm run build -w @devlog/core",
+    "build:dashboard": "npm run build -w @devlog/dashboard",
+    "build:electron": "npm run build -w @devlog/electron",
+    "typecheck": "npm run build -w @devlog/core && npm run typecheck -w @devlog/core && npm run typecheck -w @devlog/electron && npm run typecheck -w @devlog/dashboard",
+    "dashboard:dev": "npm run dev -w @devlog/dashboard",
+    "electron:dev": "npm run build:core && npm run build:dashboard && npm run dev -w @devlog/electron",
+    "cli": "npm run dev -w @devlog/core"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@devlog/electron",
+  "version": "0.1.0",
+  "description": "Electron shell: background daemon (tray) + dashboard window for devlog.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "npm run build && electron .",
+    "typecheck": "tsc --noEmit",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "@devlog/core": "*",
+    "chokidar": "^3.6.0",
+    "keytar": "^7.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "electron": "^32.0.0",
+    "typescript": "5.9.3"
+  }
+}

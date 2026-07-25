@@ -1,0 +1,36 @@
+{
+  "name": "@devlog/core",
+  "version": "0.2.0",
+  "description": "Core daemon logic: git extraction, redaction, AI generation, SQLite storage, CLI. Consumed by @devlog/electron and @devlog/dashboard.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "bin": {
+    "devlog": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && mkdir -p dist/db && cp src/db/schema.sql dist/db/schema.sql",
+    "dev": "ts-node-dev --respawn src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "chokidar": "^3.6.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "js-yaml": "^4.1.0",
+    "keytar": "^7.9.0",
+    "node-fetch": "^2.7.0",
+    "playwright": "^1.47.0",
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.5.0",
+    "@types/node-fetch": "^2.6.11",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "5.9.3"
+  }
+}

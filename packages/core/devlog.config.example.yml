@@ -1,0 +1,14 @@
+# Copy this to .devlog.yml in the root of each repo you want devlog to watch.
+
+project_name: Padi              # explicit override — always wins over auto-detection
+visibility: public               # public | private | client
+project_tag: "#PadiApp"
+voice_profile: default
+platforms:
+  - x
+  # - linkedin
+
+# For private/client repos, don't rely on the diff at all — put a short
+# manual summary directly in your commit message using this convention:
+#   git commit -m "fix: webhook retry bug [[summary: fixed webhook retries]]"
+# devlog will extract only the bracketed summary, never the diff.
