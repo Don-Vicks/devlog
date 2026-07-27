@@ -7,14 +7,17 @@
     "build": "tsc -p tsconfig.json",
     "dev": "npm run build && electron .",
     "typecheck": "tsc --noEmit",
-    "start": "electron ."
+    "start": "electron .",
+    "rebuild-native": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
     "@devlog/core": "*",
     "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5",
     "keytar": "^7.9.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.7.0",
     "@types/node": "^22.5.0",
     "electron": "^32.0.0",
     "typescript": "5.9.3"
