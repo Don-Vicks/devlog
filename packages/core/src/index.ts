@@ -31,3 +31,4 @@ export { postToX } from './publish/postToX';
 export { connectLinkedInAccount, disconnectLinkedInAccount, listLinkedInAccounts } from './publish/linkedinAuth';
 export { postToLinkedIn } from './publish/postToLinkedIn';
 export { approveAndMaybePublish } from './publish/publish';
+export { startBot } from './queue/bot';

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-import 'dotenv/config';
+import { loadEnv } from './config/loadEnv';
+loadEnv();
 import path from 'path';
 import { Command } from 'commander';
 import { installHook } from './hooks/install';
 import { processCommit } from './pipeline';
+import { startBot } from './queue/bot';
 import { getDb, listPending, listRepos, approveAndMaybePublish, setPostStatus } from './index';
 
 const program = new Command();
@@ -64,6 +66,18 @@ program
     const db = getDb();
     setPostStatus(db, Number(postId), 'rejected');
     console.log(`[devlog] Post #${postId} rejected.`);
+  });
+
+program
+  .command('bot')
+  .description('Start the Telegram bot to review and approve drafts from chat')
+  .action(async () => {
+    try {
+      await startBot();
+    } catch (err) {
+      console.error('[devlog] Bot failed:', (err as Error).message);
+      process.exitCode = 1;
+    }
   });
 
 program
