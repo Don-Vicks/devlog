@@ -4,7 +4,7 @@ import path from 'path';
 import { Command } from 'commander';
 import { installHook } from './hooks/install';
 import { processCommit } from './pipeline';
-import { getDb, listPending, setPostStatus, listRepos } from './db';
+import { getDb, listPending, listRepos, approveAndMaybePublish, setPostStatus } from './index';
 
 const program = new Command();
 program.name('devlog').description('Automated build-in-public tool');
@@ -51,12 +51,10 @@ program
   .command('approve <postId>')
   .option('-e, --edit <content>', 'Approve with edited content')
   .description('Approve a pending post (copy the output, mark approved)')
-  .action((postId: string, opts: { edit?: string }) => {
-    const db = getDb();
-    const post = setPostStatus(db, Number(postId), 'approved', opts.edit ?? null);
-    console.log(`[devlog] Post #${post.id} approved.`);
+  .action(async (postId: string, opts: { edit?: string }) => {
+    const post = await approveAndMaybePublish(Number(postId), opts.edit ?? null);
+    console.log(`[devlog] Post #${post.id} is now ${post.status}.`);
     console.log(`\n${post.edited_content || post.content}\n`);
-    console.log('[devlog] Copy the above and post manually, or enable auto-posting once accounts are connected.');
   });
 
 program

@@ -12,9 +12,19 @@ import {
   upsertRepo,
   readVoiceRules,
   writeVoiceRules,
+  listVoiceProfiles,
+  createVoiceProfile,
+  deleteVoiceProfile,
+  listAccounts,
+  connectXAccount,
+  disconnectXAccount,
+  connectLinkedInAccount,
+  disconnectLinkedInAccount,
+  approveAndMaybePublish,
   RepoConfig,
 } from '@devlog/core';
 import path from 'path';
+import { shell } from 'electron';
 
 /**
  * All dashboard <-> daemon communication goes through these handlers.
@@ -78,10 +88,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(
     'posts:approve',
     (_event, args: { id: number; editedContent?: string | null }) => {
-      const db = getDb();
-      const post = setPostStatus(db, args.id, 'approved', args.editedContent ?? null);
-      db.close();
-      return post;
+      return approveAndMaybePublish(args.id, args.editedContent ?? null);
     }
   );
 
@@ -92,10 +99,85 @@ export function registerIpcHandlers(): void {
     return post;
   });
 
-  ipcMain.handle('voice:read', () => readVoiceRules());
+  ipcMain.handle('voice:list', () => listVoiceProfiles());
 
-  ipcMain.handle('voice:write', (_event, args: { content: string }) => {
-    writeVoiceRules(args.content);
+  ipcMain.handle('voice:read', (_event, args?: { profile?: string }) => readVoiceRules(args?.profile));
+
+  ipcMain.handle('voice:write', (_event, args: { content: string; profile?: string }) => {
+    writeVoiceRules(args.content, args.profile);
     return true;
+  });
+
+  ipcMain.handle('voice:create', (_event, args: { name: string; template?: string }) => {
+    return createVoiceProfile(args.name, args.template);
+  });
+
+  ipcMain.handle('voice:delete', (_event, args: { name: string }) => {
+    deleteVoiceProfile(args.name);
+    return true;
+  });
+
+  ipcMain.handle('accounts:list', () => {
+    const db = getDb();
+    const accounts = listAccounts(db);
+    db.close();
+    return accounts;
+  });
+
+  ipcMain.handle('accounts:envStatus', () => {
+    return {
+      x: { configured: !!process.env.X_CLIENT_ID },
+      linkedin: {
+        configured: !!(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET),
+      },
+    };
+  });
+
+  ipcMain.handle('accounts:connect', async (_event, args: { platform: string }) => {
+    const callbackPort = Number(process.env.X_CALLBACK_PORT || '4321');
+
+    if (args.platform === 'x') {
+      const clientId = process.env.X_CLIENT_ID;
+      if (!clientId) {
+        throw new Error(
+          'X_CLIENT_ID is not set in .env. Go to https://developer.x.com/en/portal/dashboard to create an app, then add your Client ID to the .env file at the project root.'
+        );
+      }
+      return connectXAccount({
+        clientId,
+        callbackPort,
+        openExternal: (url) => shell.openExternal(url),
+      });
+    }
+
+    if (args.platform === 'linkedin') {
+      const clientId = process.env.LINKEDIN_CLIENT_ID;
+      const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
+      if (!clientId || !clientSecret) {
+        throw new Error(
+          'LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET are not set in .env. Go to https://www.linkedin.com/developers/apps to create an app, then add your credentials to the .env file at the project root.'
+        );
+      }
+      return connectLinkedInAccount({
+        clientId,
+        clientSecret,
+        callbackPort,
+        openExternal: (url) => shell.openExternal(url),
+      });
+    }
+
+    throw new Error(`Unsupported platform: ${args.platform}`);
+  });
+
+  ipcMain.handle('accounts:disconnect', async (_event, args: { platform: string; handle: string }) => {
+    if (args.platform === 'x') {
+      await disconnectXAccount(args.handle);
+      return true;
+    }
+    if (args.platform === 'linkedin') {
+      await disconnectLinkedInAccount(args.handle);
+      return true;
+    }
+    throw new Error(`Unsupported platform: ${args.platform}`);
   });
 }

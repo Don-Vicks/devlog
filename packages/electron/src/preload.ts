@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Repo, Post, PostWithRepo, RepoConfig } from '@devlog/core';
+import type { Repo, Post, PostWithRepo, RepoConfig, Account } from '@devlog/core';
 
 const devlogAPI = {
   repos: {
@@ -16,8 +16,21 @@ const devlogAPI = {
     reject: (id: number): Promise<Post> => ipcRenderer.invoke('posts:reject', { id }),
   },
   voice: {
-    read: (): Promise<string> => ipcRenderer.invoke('voice:read'),
-    write: (content: string): Promise<boolean> => ipcRenderer.invoke('voice:write', { content }),
+    list: (): Promise<string[]> => ipcRenderer.invoke('voice:list'),
+    read: (profile?: string): Promise<string> => ipcRenderer.invoke('voice:read', { profile }),
+    write: (content: string, profile?: string): Promise<boolean> =>
+      ipcRenderer.invoke('voice:write', { content, profile }),
+    create: (name: string, template?: string): Promise<string> =>
+      ipcRenderer.invoke('voice:create', { name, template }),
+    delete: (name: string): Promise<boolean> => ipcRenderer.invoke('voice:delete', { name }),
+  },
+  accounts: {
+    list: (): Promise<Account[]> => ipcRenderer.invoke('accounts:list'),
+    envStatus: (): Promise<{ x: { configured: boolean }; linkedin: { configured: boolean } }> =>
+      ipcRenderer.invoke('accounts:envStatus'),
+    connect: (platform: string): Promise<Account> => ipcRenderer.invoke('accounts:connect', { platform }),
+    disconnect: (platform: string, handle: string): Promise<boolean> =>
+      ipcRenderer.invoke('accounts:disconnect', { platform, handle }),
   },
   onDbChanged: (callback: () => void): (() => void) => {
     const listener = () => callback();

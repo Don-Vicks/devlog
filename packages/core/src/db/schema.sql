@@ -48,7 +48,10 @@ CREATE TABLE IF NOT EXISTS accounts (
   handle TEXT NOT NULL,
   status TEXT DEFAULT 'connected',              -- connected | expired | error
   token_ref TEXT NOT NULL,                      -- key name in OS keychain, never the token itself
+  refresh_token_ref TEXT,
+  expiry_at TEXT,
   last_posted_at TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
   UNIQUE(platform, handle)
 );
 

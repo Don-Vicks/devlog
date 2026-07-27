@@ -12,13 +12,22 @@ export {
   listPending,
   listAllPosts,
   setPostStatus,
+  listAccounts,
+  upsertAccount,
+  deleteAccount,
+  getAccount,
   recentVoiceExamples,
 } from './db';
-export type { PostWithRepo, UpsertRepoArgs, CreatePostArgs } from './db';
+export type { PostWithRepo, UpsertRepoArgs, CreatePostArgs, UpsertAccountArgs } from './db';
 
 export { loadRepoConfig, writeRepoConfig, DEFAULTS as DEFAULT_REPO_CONFIG } from './config/loadConfig';
 export { resolveProjectName } from './extraction/projectName';
 export { installHook } from './hooks/install';
 export { processCommit } from './pipeline';
 export { redact, redactKnownNames } from './redaction/redact';
-export { readVoiceRules, writeVoiceRules } from './generation/voiceRules';
+export { readVoiceRules, writeVoiceRules, listVoiceProfiles, createVoiceProfile, deleteVoiceProfile } from './generation/voiceRules';
+export { connectXAccount, disconnectXAccount, listXAccounts } from './publish/xAuth';
+export { postToX } from './publish/postToX';
+export { connectLinkedInAccount, disconnectLinkedInAccount, listLinkedInAccounts } from './publish/linkedinAuth';
+export { postToLinkedIn } from './publish/postToLinkedIn';
+export { approveAndMaybePublish } from './publish/publish';

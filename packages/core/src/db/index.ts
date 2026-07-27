@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { Platform, Post, PostStatus, Repo, Visibility, VoiceExample } from '../types';
+import { Account, Platform, Post, PostStatus, Repo, Visibility, VoiceExample } from '../types';
 
 const DB_DIR = path.join(os.homedir(), '.devlog');
 const DB_PATH = path.join(DB_DIR, 'devlog.sqlite');
@@ -124,4 +124,49 @@ export function setPostStatus(
 
 export function recentVoiceExamples(db: Database.Database, limit = 5): VoiceExample[] {
   return db.prepare(`SELECT * FROM voice_examples ORDER BY created_at DESC LIMIT ?`).all(limit) as VoiceExample[];
+}
+
+export interface UpsertAccountArgs {
+  platform: Platform;
+  handle: string;
+  tokenRef: string;
+  refreshTokenRef: string | null;
+  expiryAt: string | null;
+  status?: Account['status'];
+}
+
+export function upsertAccount(db: Database.Database, args: UpsertAccountArgs): Account {
+  db.prepare(
+    `
+    INSERT INTO accounts (platform, handle, status, token_ref, refresh_token_ref, expiry_at)
+    VALUES (@platform, @handle, @status, @tokenRef, @refreshTokenRef, @expiryAt)
+    ON CONFLICT(platform, handle) DO UPDATE SET
+      status=excluded.status,
+      token_ref=excluded.token_ref,
+      refresh_token_ref=excluded.refresh_token_ref,
+      expiry_at=excluded.expiry_at
+  `
+  ).run({
+    platform: args.platform,
+    handle: args.handle,
+    status: args.status ?? 'connected',
+    tokenRef: args.tokenRef,
+    refreshTokenRef: args.refreshTokenRef,
+    expiryAt: args.expiryAt,
+  });
+  return db.prepare('SELECT * FROM accounts WHERE platform = ? AND handle = ?').get(args.platform, args.handle) as Account;
+}
+
+export function listAccounts(db: Database.Database): Account[] {
+  return db.prepare('SELECT * FROM accounts ORDER BY created_at DESC').all() as Account[];
+}
+
+export function getAccount(db: Database.Database, platform: Platform): Account | undefined {
+  return db.prepare('SELECT * FROM accounts WHERE platform = ? ORDER BY created_at DESC LIMIT 1').get(platform) as
+    | Account
+    | undefined;
+}
+
+export function deleteAccount(db: Database.Database, platform: Platform, handle: string): void {
+  db.prepare('DELETE FROM accounts WHERE platform = ? AND handle = ?').run(platform, handle);
 }

@@ -1,4 +1,4 @@
-import type { Repo, Post, PostWithRepo, RepoConfig } from '@devlog/core';
+import type { Repo, Post, PostWithRepo, RepoConfig, Account } from '@devlog/core';
 
 export interface DevlogWindowAPI {
   repos: {
@@ -13,8 +13,17 @@ export interface DevlogWindowAPI {
     reject: (id: number) => Promise<Post>;
   };
   voice: {
-    read: () => Promise<string>;
-    write: (content: string) => Promise<boolean>;
+    list: () => Promise<string[]>;
+    read: (profile?: string) => Promise<string>;
+    write: (content: string, profile?: string) => Promise<boolean>;
+    create: (name: string, template?: string) => Promise<string>;
+    delete: (name: string) => Promise<boolean>;
+  };
+  accounts: {
+    list: () => Promise<Account[]>;
+    envStatus: () => Promise<{ x: { configured: boolean }; linkedin: { configured: boolean } }>;
+    connect: (platform: string) => Promise<Account>;
+    disconnect: (platform: string, handle: string) => Promise<boolean>;
   };
   onDbChanged: (callback: () => void) => () => void;
 }
@@ -45,7 +54,19 @@ function getApi(): DevlogWindowAPI {
       approve: notConnected as never,
       reject: notConnected as never,
     },
-    voice: { read: async () => '', write: notConnected as never },
+    voice: {
+      list: async () => [],
+      read: async () => '',
+      write: notConnected as never,
+      create: notConnected as never,
+      delete: notConnected as never,
+    },
+    accounts: {
+      list: async () => [],
+      envStatus: async () => ({ x: { configured: false }, linkedin: { configured: false } }),
+      connect: notConnected as never,
+      disconnect: notConnected as never,
+    },
     onDbChanged: () => () => {},
   };
 }

@@ -59,7 +59,10 @@ export interface Account {
   handle: string;
   status: 'connected' | 'expired' | 'error';
   token_ref: string;
+  refresh_token_ref: string | null;
+  expiry_at: string | null;
   last_posted_at: string | null;
+  created_at?: string;
 }
 
 export interface CommitInfo {
@@ -92,6 +95,13 @@ export interface GeneratePostArgs {
   diff: string | null;
   manualSummary: string | null;
   mode: PostMode;
+  voiceProfile?: string;
   voiceExamples: VoiceExample[];
   engagementNotes?: string;
+}
+
+export interface OAuthTokenSet {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
 }
