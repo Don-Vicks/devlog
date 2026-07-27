@@ -47,7 +47,7 @@ Return ONLY the post content, nothing else — no preamble, no explanation, no m
 /**
  * Routes generation based on repo visibility:
  * - private/client -> local Ollama only, nothing leaves the machine
- * - public -> Gemini Flash primary, Groq fallback
+ * - public -> Groq primary (free tier, 30 req/min), Gemini fallback if key is set
  * Returns a single string for 'single' mode, or string[] for 'thread' mode.
  */
 export async function generatePost(args: GeneratePostArgs): Promise<string | string[]> {
@@ -56,13 +56,15 @@ export async function generatePost(args: GeneratePostArgs): Promise<string | str
   let rawOutput: string;
   if (args.visibility === 'private' || args.visibility === 'client') {
     rawOutput = await generateWithOllama(prompt);
-  } else {
+  } else if (process.env.GEMINI_API_KEY) {
     try {
       rawOutput = await generateWithGemini(prompt);
     } catch (err) {
       console.warn(`[devlog] Gemini failed (${(err as Error).message}), falling back to Groq`);
       rawOutput = await generateWithGroq(prompt);
     }
+  } else {
+    rawOutput = await generateWithGroq(prompt);
   }
 
   const { clean } = redact(rawOutput);

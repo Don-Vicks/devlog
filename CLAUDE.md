@@ -66,12 +66,12 @@ git commit → post-commit hook → cli process-commit → pipeline.ts
 
 ## AI routing
 
-- **Public repos:** Gemini 1.5 Flash → Groq llama-3.3-70b (fallback)
+- **Public repos:** Groq llama-3.3-70b (free, 30 req/min) → Gemini Flash fallback if key is set
 - **Private/client repos:** Local Ollama only (nothing leaves the machine)
 
 ## Env vars
 
-See `.env` at the repo root. Minimum for X posting: `GEMINI_API_KEY` + `X_CLIENT_ID`. For LinkedIn: add `LINKEDIN_CLIENT_ID` + `LINKEDIN_CLIENT_SECRET`. For Telegram bot: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`.
+See `.env` at the repo root. Minimum for generation: `GROQ_API_KEY` (free at console.groq.com). For X posting: add `X_CLIENT_ID`. For LinkedIn: add `LINKEDIN_CLIENT_ID` + `LINKEDIN_CLIENT_SECRET`. For Telegram bot: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`.
 
 ## Gotchas
 
