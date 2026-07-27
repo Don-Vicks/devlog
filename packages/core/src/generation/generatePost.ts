@@ -10,9 +10,9 @@ function formatExamples(voiceExamples: VoiceExample[]): string {
 }
 
 export function buildPrompt(args: GeneratePostArgs): string {
-  const { projectName, projectTag, commitMessage, diff, manualSummary, mode, voiceExamples, engagementNotes } = args;
+  const { projectName, projectTag, commitMessage, diff, manualSummary, mode, voiceProfile, voiceExamples, engagementNotes } = args;
 
-  const voiceRules = readVoiceRules();
+  const voiceRules = readVoiceRules(voiceProfile);
   const examples = formatExamples(voiceExamples);
 
   const sourceContent = diff

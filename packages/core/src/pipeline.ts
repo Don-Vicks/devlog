@@ -45,6 +45,7 @@ export async function processCommit(repoPath: string): Promise<Post[]> {
     diff: diffForModel,
     manualSummary: commit.manualSummary,
     mode,
+    voiceProfile: config.voice_profile,
     voiceExamples,
   });
 
