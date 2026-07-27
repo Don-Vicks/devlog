@@ -17,6 +17,8 @@
     "typecheck": "npm run build -w @devlog/core && npm run typecheck -w @devlog/core && npm run typecheck -w @devlog/electron && npm run typecheck -w @devlog/dashboard",
     "dashboard:dev": "npm run dev -w @devlog/dashboard",
     "electron:dev": "npm run build:core && npm run build:dashboard && npm run dev -w @devlog/electron",
+    "dev": "bash scripts/dev.sh",
+    "rebuild-native": "npm run rebuild-native -w @devlog/electron",
     "cli": "npm run dev -w @devlog/core"
   }
 }
