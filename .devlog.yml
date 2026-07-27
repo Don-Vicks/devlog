@@ -1,0 +1,7 @@
+project_name: devlog
+visibility: public
+project_tag: devlog
+voice_profile: default
+platforms:
+  - x
+  - linkedin
