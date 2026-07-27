@@ -1,9 +1,12 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron';
 import path from 'path';
+import dotenv from 'dotenv';
 import chokidar from 'chokidar';
 import os from 'os';
 import { registerIpcHandlers } from './ipc/handlers';
 import { getDb, listPending } from '@devlog/core';
+
+dotenv.config({ path: path.join(__dirname, '..', '..', '..', '..', '.env') });
 
 let tray: Tray | null = null;
 let dashboardWindow: BrowserWindow | null = null;
