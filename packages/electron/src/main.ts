@@ -6,7 +6,7 @@ import os from 'os';
 import { registerIpcHandlers } from './ipc/handlers';
 import { getDb, listPending } from '@devlog/core';
 
-dotenv.config({ path: path.join(__dirname, '..', '..', '..', '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
 
 let tray: Tray | null = null;
 let dashboardWindow: BrowserWindow | null = null;
