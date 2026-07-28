@@ -146,6 +146,7 @@ export function registerIpcHandlers(): void {
       }
       return connectXAccount({
         clientId,
+        clientSecret: process.env.X_CLIENT_SECRET || undefined,
         callbackPort,
         openExternal: (url) => shell.openExternal(url),
       });

@@ -30,6 +30,7 @@ async function exchangeCode(args: {
   code: string;
   codeVerifier: string;
   clientId: string;
+  clientSecret?: string;
   redirectUri: string;
 }): Promise<OAuthTokenSet> {
   const body = new URLSearchParams({
@@ -40,9 +41,15 @@ async function exchangeCode(args: {
     code_verifier: args.codeVerifier,
   });
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
+  if (args.clientSecret) {
+    const token = Buffer.from(`${args.clientId}:${args.clientSecret}`).toString('base64');
+    headers['Authorization'] = `Basic ${token}`;
+  }
+
   const res = await fetch(X_TOKEN_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers,
     body,
   });
 
@@ -73,6 +80,7 @@ async function fetchHandle(accessToken: string): Promise<string> {
 
 export async function connectXAccount(args: {
   clientId: string;
+  clientSecret?: string;
   callbackPort: number;
   openExternal: (url: string) => Promise<void> | void;
 }): Promise<Account> {
@@ -142,7 +150,7 @@ export async function connectXAccount(args: {
     server.on('close', () => clearTimeout(timeout));
   });
 
-  const tokens = await exchangeCode({ code, codeVerifier: verifier, clientId: args.clientId, redirectUri });
+  const tokens = await exchangeCode({ code, codeVerifier: verifier, clientId: args.clientId, clientSecret: args.clientSecret, redirectUri });
   const handle = await fetchHandle(tokens.accessToken);
   const tokenRef = `${SERVICE}:x:${handle}`;
   const refreshRef = `${tokenRef}:refresh`;
