@@ -11,24 +11,12 @@ const LI_AUTHORIZE_URL = 'https://www.linkedin.com/oauth/v2/authorization';
 const LI_TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
 const LI_USERINFO_URL = 'https://api.linkedin.com/v2/userinfo';
 
-function base64Url(input: Buffer): string {
-  return input
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-}
-
-function createPkcePair(): { verifier: string; challenge: string; state: string } {
-  const verifier = base64Url(crypto.randomBytes(32));
-  const challenge = base64Url(crypto.createHash('sha256').update(verifier).digest());
-  const state = base64Url(crypto.randomBytes(16));
-  return { verifier, challenge, state };
+function createState(): string {
+  return crypto.randomBytes(16).toString('hex');
 }
 
 async function exchangeCode(args: {
   code: string;
-  codeVerifier: string;
   clientId: string;
   clientSecret: string;
   redirectUri: string;
@@ -39,7 +27,6 @@ async function exchangeCode(args: {
     redirect_uri: args.redirectUri,
     client_id: args.clientId,
     client_secret: args.clientSecret,
-    code_verifier: args.codeVerifier,
   });
 
   const res = await fetch(LI_TOKEN_URL, {
@@ -78,7 +65,7 @@ export async function connectLinkedInAccount(args: {
   callbackPort: number;
   openExternal: (url: string) => Promise<void> | void;
 }): Promise<Account> {
-  const { verifier, challenge, state } = createPkcePair();
+  const state = createState();
   const redirectUri = `http://127.0.0.1:${args.callbackPort}/callback/linkedin`;
   const scope = 'w_member_social profile openid';
   const authorizeUrl = new URL(LI_AUTHORIZE_URL);
@@ -87,10 +74,16 @@ export async function connectLinkedInAccount(args: {
   authorizeUrl.searchParams.set('redirect_uri', redirectUri);
   authorizeUrl.searchParams.set('scope', scope);
   authorizeUrl.searchParams.set('state', state);
-  authorizeUrl.searchParams.set('code_challenge', challenge);
-  authorizeUrl.searchParams.set('code_challenge_method', 'S256');
 
   const code = await new Promise<string>((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => {
+      if (!settled) {
+        settled = true;
+        server.close();
+      }
+    };
+
     const server = http.createServer((req, res) => {
       const requestUrl = new URL(req.url || '/', redirectUri);
       if (requestUrl.pathname !== '/callback/linkedin') {
@@ -102,13 +95,26 @@ export async function connectLinkedInAccount(args: {
       if (!returnedState || returnedState !== state || !returnedCode) {
         res.writeHead(400).end('Invalid OAuth callback');
         reject(new Error('Invalid LinkedIn OAuth callback'));
-        server.close();
+        cleanup();
         return;
       }
       res.writeHead(200, { 'Content-Type': 'text/plain' });
       res.end('devlog connected to LinkedIn. You can close this tab.');
       resolve(returnedCode);
-      server.close();
+      cleanup();
+    });
+
+    const timeout = setTimeout(() => {
+      reject(new Error('LinkedIn OAuth timed out — no callback received within 5 minutes'));
+      cleanup();
+    }, 5 * 60 * 1000);
+
+    server.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        reject(new Error(`Port ${args.callbackPort} is in use. Close the other app using it and try again.`));
+      } else {
+        reject(err);
+      }
     });
 
     server.listen(args.callbackPort, '127.0.0.1', async () => {
@@ -116,16 +122,15 @@ export async function connectLinkedInAccount(args: {
         await args.openExternal(authorizeUrl.toString());
       } catch (err) {
         reject(err);
-        server.close();
+        cleanup();
       }
     });
 
-    server.on('error', reject);
+    server.on('close', () => clearTimeout(timeout));
   });
 
   const tokens = await exchangeCode({
     code,
-    codeVerifier: verifier,
     clientId: args.clientId,
     clientSecret: args.clientSecret,
     redirectUri,
