@@ -3,26 +3,29 @@ import path from 'path';
 import dotenv from 'dotenv';
 import chokidar from 'chokidar';
 import os from 'os';
+import fs from 'fs';
 import { registerIpcHandlers } from './ipc/handlers';
 import { getDb, listPending } from '@devlog/core';
+import { findProjectRoot, getDashboardPath } from './paths';
 
-function rootPath(...segments: string[]): string {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, '..', '..', '..', ...segments);
-  }
-  return path.join(__dirname, '..', '..', '..', ...segments);
+const isDev = !app.isPackaged;
+const projectRoot = isDev ? findProjectRoot(__dirname) : process.resourcesPath;
+
+// Match CLI behavior: ~/.devlog/.env takes priority
+const userEnv = path.join(os.homedir(), '.devlog', '.env');
+if (fs.existsSync(userEnv)) {
+  dotenv.config({ path: userEnv, override: false });
+} else if (!isDev) {
+  // Packaged: no project root .env to fall back to
+} else {
+  dotenv.config({ path: path.join(projectRoot, '.env'), override: false });
 }
-
-dotenv.config({ path: rootPath('.env') });
 
 let tray: Tray | null = null;
 let dashboardWindow: BrowserWindow | null = null;
 
 const DASHBOARD_DEV_URL = 'http://localhost:5173';
-const DASHBOARD_BUILD_PATH = app.isPackaged
-  ? path.join(process.resourcesPath, 'dashboard', 'index.html')
-  : path.join(__dirname, '..', '..', 'dashboard', 'dist', 'index.html');
-const isDev = !app.isPackaged;
+const DASHBOARD_BUILD_PATH = getDashboardPath(app.isPackaged, projectRoot);
 
 function createDashboardWindow(): BrowserWindow {
   const win = new BrowserWindow({

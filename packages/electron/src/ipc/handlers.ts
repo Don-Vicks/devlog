@@ -25,7 +25,8 @@ import {
 } from '@devlog/core';
 import path from 'path';
 import fs from 'fs';
-import { shell } from 'electron';
+import { shell, app } from 'electron';
+import { getCliPath, findProjectRoot } from '../paths';
 
 /**
  * All dashboard <-> daemon communication goes through these handlers.
@@ -52,7 +53,8 @@ export function registerIpcHandlers(): void {
       const { repoPath, config } = args;
 
       writeRepoConfig(repoPath, config);
-      const cliPath = path.join(__dirname, '..', '..', '..', 'core', 'dist', 'cli.js');
+      const projectRoot = findProjectRoot(__dirname);
+      const cliPath = getCliPath(app.isPackaged, __dirname, projectRoot);
       installHook(repoPath, cliPath);
 
       const fullConfig = loadRepoConfig(repoPath);

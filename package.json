@@ -15,6 +15,8 @@
     "build:dashboard": "npm run build -w @devlog/dashboard",
     "build:electron": "npm run build -w @devlog/electron",
     "typecheck": "npm run build -w @devlog/core && npm run typecheck -w @devlog/core && npm run typecheck -w @devlog/electron && npm run typecheck -w @devlog/dashboard",
+    "watch:core": "npm run watch -w @devlog/core",
+    "watch:dashboard": "npm run dev -w @devlog/dashboard",
     "dashboard:dev": "npm run dev -w @devlog/dashboard",
     "electron:dev": "npm run build:core && npm run build:dashboard && npm run dev -w @devlog/electron",
     "dev": "bash scripts/dev.sh",
