@@ -92,8 +92,19 @@ export async function connectLinkedInAccount(args: {
       }
       const returnedState = requestUrl.searchParams.get('state');
       const returnedCode = requestUrl.searchParams.get('code');
+      const error = requestUrl.searchParams.get('error');
+      const errorDesc = requestUrl.searchParams.get('error_description');
+      console.log('[devlog] LinkedIn callback:', { returnedState: returnedState?.slice(0, 8), state: state.slice(0, 8), hasCode: !!returnedCode, error, errorDesc });
+      if (error) {
+        res.writeHead(400, { 'Content-Type': 'text/html' });
+        res.end(`<h3>LinkedIn Error</h3><p>${error}: ${errorDesc}</p><p>Close this tab and try again.</p>`);
+        reject(new Error(`LinkedIn OAuth error: ${error} — ${errorDesc}`));
+        cleanup();
+        return;
+      }
       if (!returnedState || returnedState !== state || !returnedCode) {
-        res.writeHead(400).end('Invalid OAuth callback');
+        res.writeHead(400, { 'Content-Type': 'text/html' });
+        res.end(`<h3>Invalid Callback</h3><p>State mismatch or missing code. Close this tab and try again.</p>`);
         reject(new Error('Invalid LinkedIn OAuth callback'));
         cleanup();
         return;
