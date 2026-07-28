@@ -25,6 +25,9 @@ export interface DevlogWindowAPI {
     connect: (platform: string) => Promise<Account>;
     disconnect: (platform: string, handle: string) => Promise<boolean>;
   };
+  media: {
+    readImage: (filePath: string) => Promise<string | null>;
+  };
   onDbChanged: (callback: () => void) => () => void;
 }
 
@@ -66,6 +69,9 @@ function getApi(): DevlogWindowAPI {
       envStatus: async () => ({ x: { configured: false }, linkedin: { configured: false } }),
       connect: notConnected as never,
       disconnect: notConnected as never,
+    },
+    media: {
+      readImage: async () => null,
     },
     onDbChanged: () => () => {},
   };

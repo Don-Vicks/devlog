@@ -55,10 +55,13 @@ async function refreshAccessToken(account: Account): Promise<Account> {
   return updated;
 }
 
-async function publishTweet(accessToken: string, text: string, replyToId?: string): Promise<string> {
+async function publishTweet(accessToken: string, text: string, replyToId?: string, mediaIds?: string[]): Promise<string> {
   const payload: Record<string, unknown> = { text };
   if (replyToId) {
     payload.reply = { in_reply_to_tweet_id: replyToId };
+  }
+  if (mediaIds && mediaIds.length > 0) {
+    payload.media = { media_ids: mediaIds };
   }
 
   const res = await fetch(TWEET_URL, {
@@ -78,7 +81,7 @@ async function publishTweet(accessToken: string, text: string, replyToId?: strin
   return data.data?.id || '';
 }
 
-export async function postToX(post: Post): Promise<string[]> {
+export async function postToX(post: Post, mediaIds?: string[]): Promise<string[]> {
   const db = getDb();
   let account = getAccount(db, 'x');
   db.close();
@@ -100,8 +103,9 @@ export async function postToX(post: Post): Promise<string[]> {
   const tweetIds: string[] = [];
   let replyToId: string | undefined;
 
-  for (const part of parts) {
-    const tweetId = await publishTweet(token, part, replyToId);
+  for (let i = 0; i < parts.length; i++) {
+    const isFirst = i === 0;
+    const tweetId = await publishTweet(token, parts[i], replyToId, isFirst ? mediaIds : undefined);
     tweetIds.push(tweetId);
     replyToId = tweetId;
   }

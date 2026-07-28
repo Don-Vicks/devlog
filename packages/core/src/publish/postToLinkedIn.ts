@@ -6,7 +6,7 @@ import { Account, Post } from '../types';
 const SERVICE = 'devlog';
 const LI_POST_URL = 'https://api.linkedin.com/v2/ugcPosts';
 
-export async function postToLinkedIn(post: Post): Promise<string[]> {
+export async function postToLinkedIn(post: Post, mediaUrn?: string): Promise<string[]> {
   const db = getDb();
   let account = getAccount(db, 'linkedin');
   db.close();
@@ -40,19 +40,30 @@ export async function postToLinkedIn(post: Post): Promise<string[]> {
   }
 
   const content = post.content;
-  const payload = {
+  const shareContent: Record<string, unknown> = {
+    shareCommentary: { text: content },
+    shareMediaCategory: 'NONE',
+  };
+
+  const specificContent: Record<string, unknown> = {
+    'com.linkedin.ugc.ShareContent': shareContent,
+  };
+
+  const payload: Record<string, unknown> = {
     author: `urn:li:person:${personId}`,
     lifecycleState: 'PUBLISHED',
-    specificContent: {
-      'com.linkedin.ugc.ShareContent': {
-        shareCommentary: { text: content },
-        shareMediaCategory: 'NONE',
-      },
-    },
+    specificContent,
     visibility: {
       'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
     },
   };
+
+  if (mediaUrn) {
+    shareContent['media'] = {
+      status: 'READY',
+      media: mediaUrn,
+    };
+  }
 
   const res = await fetch(LI_POST_URL, {
     method: 'POST',

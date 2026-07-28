@@ -24,6 +24,7 @@ import {
   RepoConfig,
 } from '@devlog/core';
 import path from 'path';
+import fs from 'fs';
 import { shell } from 'electron';
 
 /**
@@ -179,5 +180,16 @@ export function registerIpcHandlers(): void {
       return true;
     }
     throw new Error(`Unsupported platform: ${args.platform}`);
+  });
+
+  ipcMain.handle('media:readImage', (_event, args: { filePath: string }) => {
+    try {
+      if (!fs.existsSync(args.filePath)) return null;
+      const data = fs.readFileSync(args.filePath);
+      const b64 = data.toString('base64');
+      return `data:image/png;base64,${b64}`;
+    } catch {
+      return null;
+    }
   });
 }

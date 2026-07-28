@@ -2,6 +2,28 @@ import React, { useEffect, useState } from 'react';
 import type { Post } from '@devlog/core';
 import { api } from '../lib/api';
 
+function MediaPreview({ mediaPath }: { mediaPath: string | null }): JSX.Element | null {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!mediaPath) return;
+    api.media.readImage(mediaPath).then(setSrc);
+  }, [mediaPath]);
+
+  if (!mediaPath || !src) return null;
+
+  return (
+    <div className="mt-3">
+      <img
+        src={src}
+        alt="Code snippet"
+        className="max-w-full rounded-md border border-bottle/10 shadow-sm cursor-pointer"
+        onClick={() => window.open(src, '_blank')}
+      />
+    </div>
+  );
+}
+
 export default function Queue({ refreshKey }: { refreshKey: number }): JSX.Element {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +91,8 @@ export default function Queue({ refreshKey }: { refreshKey: number }): JSX.Eleme
           ) : (
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.content}</p>
           )}
+
+          {editingId !== post.id && <MediaPreview mediaPath={post.media_path} />}
 
           <div className="mt-3 flex gap-2">
             {editingId === post.id ? (

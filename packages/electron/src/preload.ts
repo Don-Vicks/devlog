@@ -32,6 +32,9 @@ const devlogAPI = {
     disconnect: (platform: string, handle: string): Promise<boolean> =>
       ipcRenderer.invoke('accounts:disconnect', { platform, handle }),
   },
+  media: {
+    readImage: (filePath: string): Promise<string | null> => ipcRenderer.invoke('media:readImage', { filePath }),
+  },
   onDbChanged: (callback: () => void): (() => void) => {
     const listener = () => callback();
     ipcRenderer.on('devlog:db-changed', listener);

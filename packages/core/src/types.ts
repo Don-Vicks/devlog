@@ -95,6 +95,7 @@ export interface GeneratePostArgs {
   diff: string | null;
   manualSummary: string | null;
   mode: PostMode;
+  platform: Platform;
   voiceProfile?: string;
   voiceExamples: VoiceExample[];
   engagementNotes?: string;

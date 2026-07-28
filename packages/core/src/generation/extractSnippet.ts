@@ -19,17 +19,20 @@ export async function extractSnippet(diff: string, commitMessage: string): Promi
   const key = process.env.GROQ_API_KEY;
   if (!key) return null;
 
-  const prompt = `You are extracting a code snippet from a git diff for a social media screenshot.
+  const prompt = `Extract the most interesting code snippet from this git diff for a social media screenshot.
 
-Read the diff below. Find the single most interesting or educational chunk of code — the key logic, the clever fix, the non-obvious decision. 5-15 lines max. Not imports, not boilerplate, not config.
+Rules:
+- 5-15 lines of actual code logic
+- Skip imports, types, boilerplate, config
+- Pick the part a fellow builder would want to see
 
 DIFF:
 ${diff.slice(0, 8000)}
 
 COMMIT: ${commitMessage}
 
-You MUST respond with a single JSON object and nothing else. No explanation, no markdown, no code blocks. Just the raw JSON:
-{"file":"path/to/file.ts","language":"typescript","snippet":"the code lines here"}`;
+RESPOND WITH ONLY A JSON OBJECT. No text before or after. No markdown. No explanation.
+Format: {"file":"filename.ts","language":"typescript","snippet":"code here"}`;
 
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -40,8 +43,11 @@ You MUST respond with a single JSON object and nothing else. No explanation, no 
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
+        messages: [
+          { role: 'system', content: 'You respond ONLY with a JSON object. No other text.' },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.2,
       }),
     });
 
