@@ -89,6 +89,14 @@ export async function connectXAccount(args: {
   authorizeUrl.searchParams.set('code_challenge_method', 'S256');
 
   const code = await new Promise<string>((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => {
+      if (!settled) {
+        settled = true;
+        server.close();
+      }
+    };
+
     const server = http.createServer((req, res) => {
       const requestUrl = new URL(req.url || '/', redirectUri);
       if (requestUrl.pathname !== '/callback') {
@@ -100,13 +108,26 @@ export async function connectXAccount(args: {
       if (!returnedState || returnedState !== state || !returnedCode) {
         res.writeHead(400).end('Invalid OAuth callback');
         reject(new Error('Invalid OAuth callback'));
-        server.close();
+        cleanup();
         return;
       }
       res.writeHead(200, { 'Content-Type': 'text/plain' });
       res.end('devlog connected. You can close this tab.');
       resolve(returnedCode);
-      server.close();
+      cleanup();
+    });
+
+    const timeout = setTimeout(() => {
+      reject(new Error('OAuth timed out — no callback received within 5 minutes'));
+      cleanup();
+    }, 5 * 60 * 1000);
+
+    server.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        reject(new Error(`Port ${args.callbackPort} is in use. Close the other app using it and try again.`));
+      } else {
+        reject(err);
+      }
     });
 
     server.listen(args.callbackPort, '127.0.0.1', async () => {
@@ -114,11 +135,11 @@ export async function connectXAccount(args: {
         await args.openExternal(authorizeUrl.toString());
       } catch (err) {
         reject(err);
-        server.close();
+        cleanup();
       }
     });
 
-    server.on('error', reject);
+    server.on('close', () => clearTimeout(timeout));
   });
 
   const tokens = await exchangeCode({ code, codeVerifier: verifier, clientId: args.clientId, redirectUri });
