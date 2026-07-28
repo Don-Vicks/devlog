@@ -26,7 +26,7 @@ async function generateCodeScreenshot(
     const snippet = await extractSnippet(diff, commitMessage);
     if (!snippet) return null;
 
-    const outputPath = renderSnippet(snippet.snippet, snippet.language, postId);
+    const outputPath = await renderSnippet(snippet.snippet, snippet.language, postId, snippet.file);
     return outputPath;
   } catch {
     return null;
