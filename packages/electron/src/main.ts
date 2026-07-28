@@ -6,13 +6,22 @@ import os from 'os';
 import { registerIpcHandlers } from './ipc/handlers';
 import { getDb, listPending } from '@devlog/core';
 
-dotenv.config({ path: path.join(__dirname, '..', '..', '..', '.env') });
+function rootPath(...segments: string[]): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, '..', '..', '..', ...segments);
+  }
+  return path.join(__dirname, '..', '..', '..', ...segments);
+}
+
+dotenv.config({ path: rootPath('.env') });
 
 let tray: Tray | null = null;
 let dashboardWindow: BrowserWindow | null = null;
 
 const DASHBOARD_DEV_URL = 'http://localhost:5173';
-const DASHBOARD_BUILD_PATH = path.join(__dirname, '..', '..', 'dashboard', 'dist', 'index.html');
+const DASHBOARD_BUILD_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'dashboard', 'index.html')
+  : path.join(__dirname, '..', '..', 'dashboard', 'dist', 'index.html');
 const isDev = !app.isPackaged;
 
 function createDashboardWindow(): BrowserWindow {
@@ -34,7 +43,6 @@ function createDashboardWindow(): BrowserWindow {
   }
 
   win.on('close', (event) => {
-    // Hide instead of quitting — this is a background app, tray controls lifecycle.
     if (!(app as unknown as { isQuitting?: boolean }).isQuitting) {
       event.preventDefault();
       win.hide();
@@ -59,7 +67,6 @@ function updateTrayBadge(): void {
 }
 
 function createTray(): void {
-  // Simple 16x16 dot icon as a placeholder — swap for a real .png/.icns asset.
   const icon = nativeImage.createEmpty();
   tray = new Tray(icon.isEmpty() ? nativeImage.createFromNamedImage('NSStatusAvailable') : icon);
 
@@ -72,6 +79,14 @@ function createTray(): void {
         }
         dashboardWindow.show();
         dashboardWindow.focus();
+      },
+    },
+    {
+      label: 'Launch at Login',
+      type: 'checkbox',
+      checked: app.getLoginItemSettings().openAtLogin,
+      click: (menuItem) => {
+        app.setLoginItemSettings({ openAtLogin: menuItem.checked });
       },
     },
     { type: 'separator' },

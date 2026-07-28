@@ -18,6 +18,7 @@
     "dashboard:dev": "npm run dev -w @devlog/dashboard",
     "electron:dev": "npm run build:core && npm run build:dashboard && npm run dev -w @devlog/electron",
     "dev": "bash scripts/dev.sh",
+    "package": "npm run build && npm run package -w @devlog/electron",
     "rebuild-native": "npm run rebuild-native -w @devlog/electron",
     "cli": "npm run dev -w @devlog/core"
   }

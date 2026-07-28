@@ -1,0 +1,29 @@
+appId: com.devlog.app
+productName: devlog
+copyright: devlog
+electronVersion: 32.3.3
+
+directories:
+  output: release
+
+files:
+  - "dist/**/*"
+  - "package.json"
+
+extraResources:
+  - from: "../core/dist"
+    to: "core"
+  - from: "../dashboard/dist"
+    to: "dashboard"
+  - from: "../../node_modules/better-sqlite3"
+    to: "better-sqlite3"
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  category: public.app-category.developer-tools
+  artifactName: "devlog-${version}-mac.${ext}"
+  hardenedRuntime: false
+  gatekeeperAssess: false
