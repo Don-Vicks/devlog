@@ -37,5 +37,8 @@ echo "  Vite ready (pid $VITE_PID)"
 echo "▸ Building electron..."
 npm run build -w @devlog/electron
 
+echo "▸ Rebuilding native modules for Electron..."
+cd "$ROOT/node_modules/better-sqlite3" && rm -rf build && npx node-gyp rebuild --release --target=32.3.3 --arch=arm64 --dist-url=https://electronjs.org/headers 2>&1 | tail -1
+
 echo "▸ Launching Electron..."
 exec npx --yes electron "$ROOT/packages/electron"

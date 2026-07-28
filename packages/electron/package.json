@@ -8,7 +8,7 @@
     "dev": "npm run build && electron .",
     "typecheck": "tsc --noEmit",
     "start": "electron .",
-    "rebuild-native": "electron-rebuild -f -w better-sqlite3"
+    "rebuild-native": "cd ../.. && cd node_modules/better-sqlite3 && rm -rf build && npx node-gyp rebuild --release --target=32.3.3 --arch=arm64 --dist-url=https://electronjs.org/headers"
   },
   "dependencies": {
     "@devlog/core": "*",
