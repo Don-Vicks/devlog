@@ -71,11 +71,9 @@ async function fetchHandle(accessToken: string): Promise<string> {
   const res = await fetch(X_USER_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) {
-    throw new Error(`X profile lookup failed (${res.status}): ${await res.text()}`);
-  }
+  if (!res.ok) return 'me';
   const data = (await res.json()) as { data?: { username?: string } };
-  return data.data?.username || 'unknown';
+  return data.data?.username || 'me';
 }
 
 export async function connectXAccount(args: {
