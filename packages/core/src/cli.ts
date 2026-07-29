@@ -2,6 +2,7 @@
 import { loadEnv } from './config/loadEnv';
 loadEnv();
 import path from 'path';
+import fs from 'fs';
 import { Command } from 'commander';
 import { installHook } from './hooks/install';
 import { processCommit } from './pipeline';
@@ -88,6 +89,31 @@ program
     listRepos(db).forEach((r) => {
       console.log(`${r.display_name}  [${r.visibility}]  ${r.path}`);
     });
+  });
+
+program
+  .command('retry [postId]')
+  .description('Reset failed post(s) to pending. Omit postId to retry all failed posts.')
+  .action((postId?: string) => {
+    const db = getDb();
+    const failed = postId
+      ? [db.prepare('SELECT * FROM posts WHERE id = ? AND status = ?').get(Number(postId), 'failed')].filter(Boolean)
+      : db.prepare("SELECT * FROM posts WHERE status = 'failed'").all();
+
+    if (!failed.length) {
+      console.log('[devlog] No failed posts to retry.');
+      return;
+    }
+
+    const update = db.prepare(
+      "UPDATE posts SET status = 'pending', media_path = NULL WHERE id = ?"
+    );
+
+    for (const post of failed as Array<{ id: number; platform: string }>) {
+      update.run(post.id);
+      console.log(`[devlog] Post #${post.id} (${post.platform}) reset to pending.`);
+    }
+    db.close();
   });
 
 program.parse(process.argv);
