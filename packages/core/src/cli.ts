@@ -3,6 +3,7 @@ import { loadEnv } from './config/loadEnv';
 loadEnv();
 import path from 'path';
 import fs from 'fs';
+import readline from 'readline';
 import { Command } from 'commander';
 import { installHook } from './hooks/install';
 import { processCommit } from './pipeline';
@@ -13,13 +14,81 @@ const program = new Command();
 program.name('devlog').description('Automated build-in-public tool');
 
 program
-  .command('install <repoPath>')
-  .description('Install the post-commit hook in a repo')
-  .action((repoPath: string) => {
+  .command('install [repoPath]')
+  .description('Install the post-commit hook and configure .devlog.yml in a repo')
+  .action(async (repoPath?: string) => {
+    const resolvedRepoPath = path.resolve(repoPath || '.');
     const cliPath = path.resolve(__dirname, 'cli.js');
-    const hookPath = installHook(path.resolve(repoPath), cliPath);
+    const hookPath = installHook(resolvedRepoPath, cliPath);
     console.log(`[devlog] Hook installed at ${hookPath}`);
-    console.log(`[devlog] Add a .devlog.yml in ${repoPath} to configure project_name, visibility, etc.`);
+
+    const configPath = path.join(resolvedRepoPath, '.devlog.yml');
+    if (fs.existsSync(configPath)) {
+      console.log(`[devlog] .devlog.yml already exists at ${configPath}. Skipping configuration creation.`);
+      return;
+    }
+
+    const defaultProjectName = path.basename(resolvedRepoPath);
+    let projectName = defaultProjectName;
+    let visibility = 'public';
+    let projectTag = `#${defaultProjectName}`;
+    let platforms = ['x', 'linkedin'];
+
+    if (process.stdin.isTTY) {
+      console.log('\n--- devlog Repository Setup ---');
+      const ask = (query: string, defaultValue: string): Promise<string> => {
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        });
+        return new Promise((resolve) => {
+          rl.question(`${query} [${defaultValue}]: `, (answer) => {
+            rl.close();
+            resolve(answer.trim() || defaultValue);
+          });
+        });
+      };
+
+      projectName = await ask('Project Name', defaultProjectName);
+      
+      let vis = '';
+      while (vis !== 'public' && vis !== 'private' && vis !== 'client') {
+        const input = await ask('Visibility (public | private | client)', 'public');
+        vis = input.toLowerCase();
+        if (vis !== 'public' && vis !== 'private' && vis !== 'client') {
+          console.log('Invalid visibility. Please enter public, private, or client.');
+        }
+      }
+      visibility = vis;
+
+      projectTag = await ask('Project Tag (e.g. #MyProject)', `#${projectName}`);
+      if (!projectTag.startsWith('#') && projectTag.length > 0) {
+        projectTag = '#' + projectTag;
+      }
+
+      const platformsInput = await ask('Platforms to target (comma-separated, options: x, linkedin)', 'x, linkedin');
+      platforms = platformsInput
+        .split(',')
+        .map((p) => p.trim().toLowerCase())
+        .filter((p) => p === 'x' || p === 'linkedin');
+      if (platforms.length === 0) {
+        platforms = ['x'];
+      }
+    } else {
+      console.log(`[devlog] Non-interactive environment detected. Creating default .devlog.yml.`);
+    }
+
+    const configContent = `# Configuration for devlog
+project_name: ${projectName}
+visibility: ${visibility}
+project_tag: "${projectTag}"
+voice_profile: default
+platforms:
+${platforms.map((p) => `  - ${p}`).join('\n')}
+`;
+
+    fs.writeFileSync(configPath, configContent, 'utf8');
+    console.log(`[devlog] Created configuration at ${configPath}`);
   });
 
 program
